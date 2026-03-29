@@ -117,11 +117,15 @@ async fn main() -> Result<()> {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    // 构建路由
-    // API 挂载到 /{prefix}/api，静态资源由全局 fallback 处理
+    // 构建路由：所有面板相关路由都在 /{prefix} 下
     let prefix = format!("/{}", base_path);
-    let api_prefix = format!("{}/api", prefix);
     let redirect_target = format!("{}/", prefix);
+
+    // 面板子路由（包含 API + 前端静态资源）
+    let panel = Router::new()
+        .nest("/api", api::routes_with_auth(state.clone()))
+        .fallback(panel_static_handler)
+        .with_state(state);
 
     let app = Router::new()
         // 根路径重定向到安全路径
@@ -129,12 +133,9 @@ async fn main() -> Result<()> {
             let r = redirect_target.clone();
             move || async move { Redirect::permanent(&r) }
         }))
-        // API 路由
-        .nest(&api_prefix, api::routes())
-        // 所有其他请求：前端静态资源 + SPA fallback
-        .fallback(static_handler)
-        .layer(cors)
-        .with_state(state);
+        // 面板路由挂载到 /{prefix}
+        .nest(&prefix, panel)
+        .layer(cors);
 
     let port = std::env::var("DOCKPANEL_PORT").unwrap_or_else(|_| "3001".into());
     let addr = format!("0.0.0.0:{}", port);
@@ -148,28 +149,12 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// 处理前端静态资源请求
-/// 匹配 /{prefix}/* 的请求，剥离前缀后查找嵌入的静态文件
-async fn static_handler(
-    axum::extract::State(state): axum::extract::State<Arc<AppState>>,
-    uri: Uri,
-) -> impl IntoResponse {
-    let full_path = uri.path();
-    let prefix = format!("/{}", state.base_path);
+/// 面板内的静态资源处理
+/// 在 nest 内部，axum 已自动剥离前缀，这里只需处理相对路径
+async fn panel_static_handler(uri: Uri) -> impl IntoResponse {
+    let path = uri.path().trim_start_matches('/');
+    let file_path = if path.is_empty() { "index.html" } else { path };
 
-    // 不以安全前缀开头 → 404
-    if !full_path.starts_with(&prefix) {
-        return (StatusCode::NOT_FOUND, "Not Found").into_response();
-    }
-
-    // 剥离前缀得到相对路径，如 /7JMvGF6r/assets/index.js → assets/index.js
-    let relative = full_path.strip_prefix(&prefix).unwrap_or("");
-    let relative = relative.trim_start_matches('/');
-
-    // 空路径（即 /{prefix}/ ）→ 返回 index.html
-    let file_path = if relative.is_empty() { "index.html" } else { relative };
-
-    // 查找嵌入的静态文件
     if let Some(content) = Asset::get(file_path) {
         let mime = mime_guess::from_path(file_path).first_or_octet_stream();
         let body: Vec<u8> = content.data.to_vec();
@@ -180,7 +165,7 @@ async fn static_handler(
         )
             .into_response()
     } else {
-        // SPA 回退：任何未知路径都返回 index.html（让前端路由处理）
+        // SPA 回退
         match Asset::get("index.html") {
             Some(content) => {
                 let body: Vec<u8> = content.data.to_vec();

@@ -23,13 +23,14 @@ fn require_docker(state: &AppState) -> Result<&bollard::Docker, impl IntoRespons
 }
 
 /// 注册所有 API 路由
-pub fn routes() -> Router<Arc<AppState>> {
-    Router::new()
-        // 公开路由
+pub fn routes_with_auth(state: Arc<AppState>) -> Router<Arc<AppState>> {
+    // 公开路由（不需要认证）
+    let public = Router::new()
         .route("/auth/login", post(login))
-        // 系统信息
-        .route("/system/info", get(system_info))
-        // 容器管理
+        .route("/system/info", get(system_info));
+
+    // 受保护路由（需要 JWT Token）
+    let protected = Router::new()
         .route("/containers", get(list_containers))
         .route("/containers", post(create_container))
         .route("/containers/{id}/start", post(start_container))
@@ -37,23 +38,25 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/containers/{id}/restart", post(restart_container))
         .route("/containers/{id}", delete(remove_container))
         .route("/containers/{id}/logs", get(container_logs))
-        // 镜像管理
         .route("/images", get(list_images))
         .route("/images/search", get(search_images))
         .route("/images/tags", get(list_image_tags))
         .route("/images/pull", post(pull_image))
         .route("/images/{id}", delete(remove_image))
-        // 网络和存储卷
         .route("/networks", get(list_networks))
         .route("/volumes", get(list_volumes))
-        // 应用商店
         .route("/apps", get(list_apps))
         .route("/apps/{id}/install", post(install_app))
-        // 项目部署
         .route("/projects", get(list_projects))
         .route("/projects", post(deploy_project))
         .route("/projects/{name}", delete(delete_project))
         .route("/projects/{name}/redeploy", post(redeploy_project))
+        .route_layer(axum::middleware::from_fn_with_state(
+            state,
+            auth::auth_middleware,
+        ));
+
+    public.merge(protected)
 }
 
 // ============ 认证 API ============

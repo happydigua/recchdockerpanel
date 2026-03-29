@@ -37,7 +37,6 @@ pub fn create_token(username: &str, secret: &str) -> Result<String> {
 }
 
 /// 验证 JWT Token
-#[allow(dead_code)]
 pub fn verify_token(token: &str, secret: &str) -> Result<Claims> {
     let data = decode::<Claims>(
         token,
@@ -49,17 +48,23 @@ pub fn verify_token(token: &str, secret: &str) -> Result<Claims> {
 }
 
 /// 认证中间件
-#[allow(dead_code)]
+/// route_layer 模式下通过 request extensions 获取 state
 pub async fn auth_middleware(
     State(state): State<Arc<AppState>>,
     req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    // 跳过登录接口
-    if req.uri().path() == "/api/auth/login" {
-        return Ok(next.run(req).await);
+    let path = req.uri().path();
+
+    // 公开路由白名单（不需要认证）
+    let public_paths = ["/auth/login", "/system/info"];
+    for pp in &public_paths {
+        if path.ends_with(pp) {
+            return Ok(next.run(req).await);
+        }
     }
 
+    // 其他路由需要 Bearer Token
     let auth_header = req
         .headers()
         .get(http::header::AUTHORIZATION)
