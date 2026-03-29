@@ -144,6 +144,8 @@ pub struct InstallAppRequest {
     pub name: String,
     pub port: u16,
     pub env_vars: std::collections::HashMap<String, String>,
+    /// 可选镜像版本标签（如 "8.0", "latest"），不填则使用模板默认值
+    pub image_tag: Option<String>,
 }
 
 /// API 通用响应

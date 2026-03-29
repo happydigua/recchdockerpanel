@@ -452,6 +452,30 @@ async fn install_app(
 
     match template {
         Some(tmpl) => {
+            // 确定最终镜像名（支持用户自定义 tag）
+            let image = if let Some(ref tag) = req.image_tag {
+                // 取镜像名（不含原 tag），加上用户指定的 tag
+                let base = tmpl.image.split(':').next().unwrap_or(&tmpl.image);
+                format!("{}:{}", base, tag)
+            } else {
+                tmpl.image.clone()
+            };
+
+            // 先拉取镜像
+            let (img_name, img_tag) = if let Some(pos) = image.rfind(':') {
+                (&image[..pos], &image[pos + 1..])
+            } else {
+                (image.as_str(), "latest")
+            };
+
+            if let Err(e) = docker::pull_image(d, img_name, img_tag).await {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::<()>::error(&format!("拉取镜像失败: {}", e))),
+                )
+                    .into_response();
+            }
+
             let env: Vec<String> = req
                 .env_vars
                 .iter()
@@ -466,7 +490,7 @@ async fn install_app(
 
             let create_req = CreateContainerRequest {
                 name: req.name,
-                image: tmpl.image.clone(),
+                image,
                 ports: Some(vec![PortMappingRequest {
                     host: req.port,
                     container: tmpl.default_port,

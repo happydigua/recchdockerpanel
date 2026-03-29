@@ -24,6 +24,7 @@
         <div class="app-body">
           <div class="app-name">{{ app.name }}</div>
           <div class="app-desc">{{ app.description }}</div>
+          <div class="app-version">{{ app.image }}</div>
         </div>
       </div>
     </div>
@@ -36,6 +37,13 @@
         </n-form-item>
         <n-form-item label="主机映射端口">
           <n-input-number v-model:value="installForm.port" :min="1" :max="65535" style="width: 100%;" />
+        </n-form-item>
+        <n-form-item label="镜像版本">
+          <n-input v-model:value="installForm.image_tag" :placeholder="getDefaultTag(currentApp)">
+            <template #prefix>
+              <span style="color: #86909c;">{{ getImageBase(currentApp) }}:</span>
+            </template>
+          </n-input>
         </n-form-item>
         <n-divider dashed style="margin: 12px 0 24px;" />
         <n-form-item v-for="env in currentApp.env_vars" :key="env.key" :label="env.label">
@@ -70,7 +78,18 @@ const search = ref('')
 const showInstall = ref(false)
 const installing = ref(false)
 const currentApp = ref(null)
-const installForm = ref({ name: '', port: 0, env_vars: {} })
+const installForm = ref({ name: '', port: 0, env_vars: {}, image_tag: '' })
+
+function getImageBase(app) {
+  if (!app) return ''
+  return app.image.split(':')[0]
+}
+
+function getDefaultTag(app) {
+  if (!app) return 'latest'
+  const parts = app.image.split(':')
+  return parts.length > 1 ? parts[1] : 'latest'
+}
 
 const filteredApps = computed(() => {
   if (!search.value) return apps.value
@@ -92,6 +111,7 @@ function openInstall(app) {
     name: app.id + '-1',
     port: app.default_port,
     env_vars: envDefaults,
+    image_tag: '',
   }
   showInstall.value = true
 }
@@ -109,7 +129,10 @@ async function doInstall() {
   }
   installing.value = true
   try {
-    const res = await api.post(`/apps/${currentApp.value.id}/install`, installForm.value)
+    const payload = { ...installForm.value }
+    // 如果没填版本标签则不传（使用模板默认值）
+    if (!payload.image_tag) delete payload.image_tag
+    const res = await api.post(`/apps/${currentApp.value.id}/install`, payload)
     if (res.success) {
       message.success(`${currentApp.value.name} 部署成功！`)
       showInstall.value = false
@@ -183,5 +206,16 @@ onMounted(loadApps)
   color: #86909c;
   line-height: 1.5;
   flex: 1;
+}
+
+.app-version {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #165dff;
+  background: #e8f3ff;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: monospace;
 }
 </style>
