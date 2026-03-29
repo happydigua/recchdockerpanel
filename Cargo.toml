@@ -1,0 +1,53 @@
+[package]
+name = "dockpanel"
+version = "0.1.0"
+edition = "2021"
+description = "A lightweight Docker management panel built with Rust"
+license = "MIT"
+
+[dependencies]
+# Web 框架
+axum = { version = "0.7", features = ["ws", "multipart"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "fs", "trace"] }
+tokio = { version = "1", features = ["full"] }
+hyper = { version = "1", features = ["full"] }
+
+# Docker 客户端
+bollard = "0.16"
+futures-util = "0.3"
+
+# 数据库
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# 序列化
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 认证
+jsonwebtoken = "9"
+bcrypt = "0.15"
+
+# 静态文件嵌入
+rust-embed = { version = "8", features = ["mime-guess"] }
+mime_guess = "2"
+
+# 日志
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# 工具
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1"
+rand = "0.8"
+tar = "0.4"
+flate2 = "1"
+reqwest = { version = "0.13.2", features = ["json"] }
+
+[profile.release]
+opt-level = "z"    # 优化体积
+lto = true         # 链接时优化
+codegen-units = 1  # 单编译单元
+strip = true       # 去除调试信息
