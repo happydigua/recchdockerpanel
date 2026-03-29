@@ -3,10 +3,10 @@ set -e
 
 # ============================================================
 #  RecchDockerPanel 更新脚本
-#  用法: curl -fsSL https://download.recch.com/dockpanel/update.sh | bash
+#  用法: curl -fsSL https://s3.cstcloud.cn/586da32874fe4876ba47f51a56a5a888/dockpanel/update.sh | bash
 # ============================================================
 
-DOWNLOAD_BASE="https://download.recch.com/dockpanel"
+DOWNLOAD_BASE="https://s3.cstcloud.cn/586da32874fe4876ba47f51a56a5a888/dockpanel"
 INSTALL_DIR="/usr/local/bin"
 
 GREEN='\033[0;32m'
