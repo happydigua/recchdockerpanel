@@ -7,7 +7,7 @@
           <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#165DFF"/>
           <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#165DFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <div class="nav-brand">DockPanel</div>
+        <div class="nav-brand">RecchDockerPanel</div>
       </div>
       
       <div class="nav-menu">

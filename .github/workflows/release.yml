@@ -52,7 +52,7 @@ jobs:
             install.sh
             update.sh
           body: |
-            ## 🚀 DockPanel ${{ github.ref_name }}
+            ## 🚀 RecchDockerPanel ${{ github.ref_name }}
 
             ### 一键安装
             ```bash

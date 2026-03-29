@@ -5,7 +5,7 @@
       <div class="arco-card arco-shadow" style="padding: 48px; text-align: center;">
         <div style="font-size: 64px; margin-bottom: 16px;">🐳</div>
         <h2 style="font-size: 24px; font-weight: 600; color: #1d2129; margin-bottom: 8px;">未检测到 Docker</h2>
-        <p style="color: #86909c; margin-bottom: 32px; font-size: 15px;">DockPanel 需要 Docker Engine 才能运行。请在服务器上安装 Docker 后刷新此页面。</p>
+        <p style="color: #86909c; margin-bottom: 32px; font-size: 15px;">RecchDockerPanel 需要 Docker Engine 才能运行。请在服务器上安装 Docker 后刷新此页面。</p>
 
         <div style="text-align: left; background: #f7f8fa; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
           <div style="font-size: 15px; font-weight: 600; color: #1d2129; margin-bottom: 16px;">📦 一键安装 Docker（Linux 服务器）</div>

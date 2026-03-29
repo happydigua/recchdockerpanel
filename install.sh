@@ -2,7 +2,7 @@
 set -e
 
 # ============================================================
-#  DockPanel 一键安装脚本
+#  RecchDockerPanel 一键安装脚本
 #  用法: curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/install.sh | bash
 # ============================================================
 
@@ -71,7 +71,7 @@ PORT=${DOCKPANEL_PORT:-3001}
 # ---- 创建 systemd 服务 ----
 cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOF
 [Unit]
-Description=DockPanel - Docker Management Panel
+Description=RecchDockerPanel - Docker Management Panel
 After=network.target docker.service
 Requires=docker.service
 
@@ -103,7 +103,7 @@ SERVER_IP=$(curl -fsSL -4 https://ifconfig.me 2>/dev/null || hostname -I | awk '
 # ---- 输出结果 ----
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║${NC}  ${GREEN}✅ DockPanel 安装完成！${NC}                              ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${GREEN}✅ RecchDockerPanel 安装完成！${NC}                              ${CYAN}║${NC}"
 echo -e "${CYAN}╠══════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║${NC}                                                      ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  访问地址: ${YELLOW}http://${SERVER_IP}:${PORT}/${RANDOM_PATH}/${NC}"

@@ -8,7 +8,7 @@
             <path d="M2 17L12 22L22 17" stroke="#165DFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M2 12L12 17L22 12" stroke="#165DFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span style="font-size: 24px; font-weight: 700; color: #1d2129; margin-left: 10px;">DockPanel</span>
+          <span style="font-size: 24px; font-weight: 700; color: #1d2129; margin-left: 10px;">RecchDockerPanel</span>
         </div>
         <div class="login-slogan">
           Enterprise Container<br/>

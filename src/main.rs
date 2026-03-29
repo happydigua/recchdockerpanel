@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
         ))
         .init();
 
-    tracing::info!("🚀 DockPanel 正在启动...");
+    tracing::info!("🚀 RecchDockerPanel 正在启动...");
 
     // 连接 Docker（可选，连接失败进入演示模式）
     let docker = match bollard::Docker::connect_with_socket_defaults() {
@@ -135,7 +135,7 @@ async fn main() -> Result<()> {
 
     let port = std::env::var("DOCKPANEL_PORT").unwrap_or_else(|_| "3001".into());
     let addr = format!("0.0.0.0:{}", port);
-    tracing::info!("🌐 DockPanel 已启动: http://0.0.0.0:{}/{}/", port, prefix.trim_start_matches('/'));
+    tracing::info!("🌐 RecchDockerPanel 已启动: http://0.0.0.0:{}/{}/", port, prefix.trim_start_matches('/'));
     tracing::info!("📖 默认账户: admin / admin123（请及时修改密码）");
     tracing::info!("🔒 安全路径: {} （可通过 DOCKPANEL_PATH 环境变量自定义）", prefix);
 

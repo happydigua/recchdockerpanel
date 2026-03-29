@@ -2,7 +2,7 @@
 set -e
 
 # ============================================================
-#  DockPanel 更新脚本
+#  RecchDockerPanel 更新脚本
 #  用法: curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/update.sh | bash
 # ============================================================
 
@@ -26,9 +26,9 @@ esac
 
 # 检测是否已安装
 if [ -f "${INSTALL_DIR}/dockpanel" ]; then
-    info "检测到已安装的 DockPanel"
+    info "检测到已安装的 RecchDockerPanel"
 else
-    error "未检测到 DockPanel，请先使用 install.sh 安装"
+    error "未检测到 RecchDockerPanel，请先使用 install.sh 安装"
 fi
 
 # 获取最新版本
@@ -52,7 +52,7 @@ mv /tmp/dockpanel "${INSTALL_DIR}/dockpanel"
 systemctl start dockpanel 2>/dev/null || true
 
 sleep 2
-info "✅ DockPanel 已更新到 ${LATEST} 并重新启动！"
+info "✅ RecchDockerPanel 已更新到 ${LATEST} 并重新启动！"
 echo ""
 echo -e "${YELLOW}提示: 访问地址和密码不变，安全路径不变。${NC}"
 echo -e "查看状态: ${GREEN}systemctl status dockpanel${NC}"
