@@ -44,32 +44,22 @@ jobs:
           cp target/x86_64-unknown-linux-musl/release/dockpanel ./dockpanel-linux-amd64
           chmod +x dockpanel-linux-amd64
 
-      - name: Upload to Cloudflare R2
-        uses: jakejarvis/s3-sync-action@master
-        env:
-          AWS_S3_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
-          AWS_S3_BUCKET: ${{ secrets.R2_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          SOURCE_DIR: '.'
-          DEST_DIR: 'dockpanel'
-        with:
-          args: --include "dockpanel-linux-amd64" --include "install.sh" --include "update.sh"
-
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dockpanel-linux-amd64
+            install.sh
+            update.sh
           body: |
             ## 🚀 DockPanel ${{ github.ref_name }}
 
             ### 一键安装
             ```bash
-            curl -fsSL https://download.recch.com/dockpanel/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/install.sh | bash
             ```
 
-            ### 更新
+            ### 更新已安装的面板
             ```bash
-            curl -fsSL https://download.recch.com/dockpanel/update.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/update.sh | bash
             ```

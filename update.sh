@@ -3,7 +3,7 @@ set -e
 
 # ============================================================
 #  DockPanel 更新脚本
-#  用法: curl -fsSL https://download.recch.com/dockpanel/update.sh | bash
+#  用法: curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/update.sh | bash
 # ============================================================
 
 REPO="happydigua/recchdockerpanel"
@@ -24,16 +24,24 @@ case "$ARCH" in
     *) error "暂不支持的架构: $ARCH" ;;
 esac
 
-# 获取当前版本（如果已安装）
+# 检测是否已安装
 if [ -f "${INSTALL_DIR}/dockpanel" ]; then
     info "检测到已安装的 DockPanel"
 else
     error "未检测到 DockPanel，请先使用 install.sh 安装"
 fi
 
-# 下载最新版本
-DOWNLOAD_URL="https://download.recch.com/dockpanel/${ASSET}"
-info "正在下载最新版本..."
+# 获取最新版本
+info "正在检查最新版本..."
+LATEST=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+if [ -z "$LATEST" ]; then
+    error "无法获取最新版本号"
+fi
+info "最新版本: ${LATEST}"
+
+# 下载新版本
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST}/${ASSET}"
+info "正在下载 ${LATEST} ..."
 curl -fsSL -o /tmp/dockpanel "$DOWNLOAD_URL" || error "下载失败"
 chmod +x /tmp/dockpanel
 

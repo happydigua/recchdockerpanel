@@ -3,7 +3,7 @@ set -e
 
 # ============================================================
 #  DockPanel 一键安装脚本
-#  用法: curl -fsSL https://download.recch.com/dockpanel/install.sh | bash
+#  用法: curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/install.sh | bash
 # ============================================================
 
 REPO="happydigua/recchdockerpanel"
@@ -45,8 +45,16 @@ else
     info "Docker 安装完成"
 fi
 
+# ---- 获取最新版本 ----
+info "正在获取最新版本..."
+LATEST=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+if [ -z "$LATEST" ]; then
+    error "无法获取最新版本号，请检查网络连接"
+fi
+info "最新版本: ${LATEST}"
+
 # ---- 下载二进制 ----
-DOWNLOAD_URL="https://download.recch.com/dockpanel/${ASSET}"
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST}/${ASSET}"
 info "正在下载 ${DOWNLOAD_URL} ..."
 curl -fsSL -o /tmp/dockpanel "$DOWNLOAD_URL" || error "下载失败，请检查网络"
 chmod +x /tmp/dockpanel
@@ -57,7 +65,6 @@ info "二进制已安装到 ${INSTALL_DIR}/dockpanel"
 mkdir -p "$DATA_DIR"
 
 # ---- 生成随机密码和路径 ----
-RANDOM_PASS=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
 RANDOM_PATH=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 8)
 PORT=${DOCKPANEL_PORT:-3001}
 
