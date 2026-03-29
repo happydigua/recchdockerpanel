@@ -47,16 +47,11 @@ jobs:
           cp update.sh upload/update.sh
           chmod +x upload/dockpanel-linux-amd64
 
-      - name: Upload to S3 (CSTCloud)
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+      - name: Upload to CSTCloud (WebDAV)
         run: |
-          aws configure set default.s3.addressing_style path
-          aws s3 cp upload/dockpanel-linux-amd64 s3://${{ secrets.S3_BUCKET }}/dockpanel/dockpanel-linux-amd64 --endpoint-url https://s3.cstcloud.cn
-          aws s3 cp upload/install.sh s3://${{ secrets.S3_BUCKET }}/dockpanel/install.sh --endpoint-url https://s3.cstcloud.cn
-          aws s3 cp upload/update.sh s3://${{ secrets.S3_BUCKET }}/dockpanel/update.sh --endpoint-url https://s3.cstcloud.cn
+          curl -T upload/dockpanel-linux-amd64 -u "${{ secrets.WEBDAV_USER }}:${{ secrets.WEBDAV_PASS }}" "https://data.cstcloud.cn/dav/dockpanel/dockpanel-linux-amd64" --create-dirs
+          curl -T upload/install.sh -u "${{ secrets.WEBDAV_USER }}:${{ secrets.WEBDAV_PASS }}" "https://data.cstcloud.cn/dav/dockpanel/install.sh"
+          curl -T upload/update.sh -u "${{ secrets.WEBDAV_USER }}:${{ secrets.WEBDAV_PASS }}" "https://data.cstcloud.cn/dav/dockpanel/update.sh"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
