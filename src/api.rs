@@ -601,7 +601,7 @@ async fn deploy_project(
 
             // Step 3: 构建镜像
             match projects::build_image_from_dir(d, &clone_dir, &image_tag, Some(dockerfile_content)).await {
-                Ok(log) => {
+                Ok(_log) => {
                     // Step 4: 启动容器
                     match projects::deploy_container(d, &image_tag, &req.name, req.port, container_port, env_vars).await {
                         Ok(container_id) => {

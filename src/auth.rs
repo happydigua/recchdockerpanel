@@ -37,6 +37,7 @@ pub fn create_token(username: &str, secret: &str) -> Result<String> {
 }
 
 /// 验证 JWT Token
+#[allow(dead_code)]
 pub fn verify_token(token: &str, secret: &str) -> Result<Claims> {
     let data = decode::<Claims>(
         token,
@@ -48,6 +49,7 @@ pub fn verify_token(token: &str, secret: &str) -> Result<Claims> {
 }
 
 /// 认证中间件
+#[allow(dead_code)]
 pub async fn auth_middleware(
     State(state): State<Arc<AppState>>,
     req: Request,
