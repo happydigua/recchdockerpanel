@@ -117,25 +117,28 @@ async fn main() -> Result<()> {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    // 构建带前缀的路由
+    // 构建路由
+    // API 挂载到 /{prefix}/api，静态资源由全局 fallback 处理
     let prefix = format!("/{}", base_path);
-
-    let panel_routes = Router::new()
-        .nest("/api", api::routes())
-        .fallback(static_handler)
-        .with_state(state);
+    let api_prefix = format!("{}/api", prefix);
+    let redirect_target = format!("{}/", prefix);
 
     let app = Router::new()
         // 根路径重定向到安全路径
-        .route("/", get(move || async move {
-            Redirect::permanent(&format!("/{}/", base_path))
+        .route("/", get({
+            let r = redirect_target.clone();
+            move || async move { Redirect::permanent(&r) }
         }))
-        .nest(&prefix, panel_routes)
-        .layer(cors);
+        // API 路由
+        .nest(&api_prefix, api::routes())
+        // 所有其他请求：前端静态资源 + SPA fallback
+        .fallback(static_handler)
+        .layer(cors)
+        .with_state(state);
 
     let port = std::env::var("DOCKPANEL_PORT").unwrap_or_else(|_| "3001".into());
     let addr = format!("0.0.0.0:{}", port);
-    tracing::info!("🌐 RecchDockerPanel 已启动: http://0.0.0.0:{}/{}/", port, prefix.trim_start_matches('/'));
+    tracing::info!("🌐 RecchDockerPanel 已启动: http://0.0.0.0:{}{}/", port, prefix);
     tracing::info!("📖 默认账户: admin / admin123（请及时修改密码）");
     tracing::info!("🔒 安全路径: {} （可通过 DOCKPANEL_PATH 环境变量自定义）", prefix);
 
@@ -146,12 +149,29 @@ async fn main() -> Result<()> {
 }
 
 /// 处理前端静态资源请求
-async fn static_handler(uri: Uri) -> impl IntoResponse {
-    let path = uri.path().trim_start_matches('/');
+/// 匹配 /{prefix}/* 的请求，剥离前缀后查找嵌入的静态文件
+async fn static_handler(
+    axum::extract::State(state): axum::extract::State<Arc<AppState>>,
+    uri: Uri,
+) -> impl IntoResponse {
+    let full_path = uri.path();
+    let prefix = format!("/{}", state.base_path);
 
-    // 尝试找到对应文件
-    if let Some(content) = Asset::get(path) {
-        let mime = mime_guess::from_path(path).first_or_octet_stream();
+    // 不以安全前缀开头 → 404
+    if !full_path.starts_with(&prefix) {
+        return (StatusCode::NOT_FOUND, "Not Found").into_response();
+    }
+
+    // 剥离前缀得到相对路径，如 /7JMvGF6r/assets/index.js → assets/index.js
+    let relative = full_path.strip_prefix(&prefix).unwrap_or("");
+    let relative = relative.trim_start_matches('/');
+
+    // 空路径（即 /{prefix}/ ）→ 返回 index.html
+    let file_path = if relative.is_empty() { "index.html" } else { relative };
+
+    // 查找嵌入的静态文件
+    if let Some(content) = Asset::get(file_path) {
+        let mime = mime_guess::from_path(file_path).first_or_octet_stream();
         let body: Vec<u8> = content.data.to_vec();
         (
             StatusCode::OK,
@@ -160,7 +180,7 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
         )
             .into_response()
     } else {
-        // SPA 回退：返回 index.html
+        // SPA 回退：任何未知路径都返回 index.html（让前端路由处理）
         match Asset::get("index.html") {
             Some(content) => {
                 let body: Vec<u8> = content.data.to_vec();
@@ -171,7 +191,7 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
                 )
                     .into_response()
             }
-            None => (StatusCode::NOT_FOUND, "前端资源未找到，请先构建前端: cd web && npm run build").into_response(),
+            None => (StatusCode::NOT_FOUND, "前端资源未找到").into_response(),
         }
     }
 }
