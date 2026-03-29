@@ -22,35 +22,37 @@ fn require_docker(state: &AppState) -> Result<&bollard::Docker, impl IntoRespons
     ))
 }
 
-/// 注册所有 API 路由
-pub fn routes_with_auth(state: Arc<AppState>) -> Router<Arc<AppState>> {
+/// 注册所有 API 路由（直接使用完整路径，不依赖 nest）
+pub fn routes_with_auth(prefix: &str, state: Arc<AppState>) -> Router<Arc<AppState>> {
+    let p = format!("{}/api", prefix);
+
     // 公开路由（不需要认证）
     let public = Router::new()
-        .route("/auth/login", post(login))
-        .route("/system/info", get(system_info));
+        .route(&format!("{}/auth/login", p), post(login))
+        .route(&format!("{}/system/info", p), get(system_info));
 
     // 受保护路由（需要 JWT Token）
     let protected = Router::new()
-        .route("/containers", get(list_containers))
-        .route("/containers", post(create_container))
-        .route("/containers/{id}/start", post(start_container))
-        .route("/containers/{id}/stop", post(stop_container))
-        .route("/containers/{id}/restart", post(restart_container))
-        .route("/containers/{id}", delete(remove_container))
-        .route("/containers/{id}/logs", get(container_logs))
-        .route("/images", get(list_images))
-        .route("/images/search", get(search_images))
-        .route("/images/tags", get(list_image_tags))
-        .route("/images/pull", post(pull_image))
-        .route("/images/{id}", delete(remove_image))
-        .route("/networks", get(list_networks))
-        .route("/volumes", get(list_volumes))
-        .route("/apps", get(list_apps))
-        .route("/apps/{id}/install", post(install_app))
-        .route("/projects", get(list_projects))
-        .route("/projects", post(deploy_project))
-        .route("/projects/{name}", delete(delete_project))
-        .route("/projects/{name}/redeploy", post(redeploy_project))
+        .route(&format!("{}/containers", p), get(list_containers))
+        .route(&format!("{}/containers", p), post(create_container))
+        .route(&format!("{}/containers/{{id}}/start", p), post(start_container))
+        .route(&format!("{}/containers/{{id}}/stop", p), post(stop_container))
+        .route(&format!("{}/containers/{{id}}/restart", p), post(restart_container))
+        .route(&format!("{}/containers/{{id}}", p), delete(remove_container))
+        .route(&format!("{}/containers/{{id}}/logs", p), get(container_logs))
+        .route(&format!("{}/images", p), get(list_images))
+        .route(&format!("{}/images/search", p), get(search_images))
+        .route(&format!("{}/images/tags", p), get(list_image_tags))
+        .route(&format!("{}/images/pull", p), post(pull_image))
+        .route(&format!("{}/images/{{id}}", p), delete(remove_image))
+        .route(&format!("{}/networks", p), get(list_networks))
+        .route(&format!("{}/volumes", p), get(list_volumes))
+        .route(&format!("{}/apps", p), get(list_apps))
+        .route(&format!("{}/apps/{{id}}/install", p), post(install_app))
+        .route(&format!("{}/projects", p), get(list_projects))
+        .route(&format!("{}/projects", p), post(deploy_project))
+        .route(&format!("{}/projects/{{name}}", p), delete(delete_project))
+        .route(&format!("{}/projects/{{name}}/redeploy", p), post(redeploy_project))
         .route_layer(axum::middleware::from_fn_with_state(
             state,
             auth::auth_middleware,

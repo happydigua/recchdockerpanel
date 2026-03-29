@@ -11,7 +11,6 @@ use axum::{
     http::{header, StatusCode, Uri},
     response::{IntoResponse, Redirect},
     routing::get,
-    Router,
 };
 use rust_embed::Embed;
 use std::sync::Arc;
@@ -117,25 +116,23 @@ async fn main() -> Result<()> {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    // 构建路由：所有面板相关路由都在 /{prefix} 下
+    // 构建路由：不使用 nest，所有路由直接注册完整路径
     let prefix = format!("/{}", base_path);
     let redirect_target = format!("{}/", prefix);
 
-    // 面板子路由（包含 API + 前端静态资源）
-    let panel = Router::new()
-        .nest("/api", api::routes_with_auth(state.clone()))
-        .fallback(panel_static_handler)
-        .with_state(state);
+    // API 路由（带认证中间件）+ 静态资源 fallback
+    let api_routes = api::routes_with_auth(&prefix, state.clone());
 
-    let app = Router::new()
-        // 根路径重定向到安全路径
+    let app = api_routes
+        // 根路径重定向
         .route("/", get({
             let r = redirect_target.clone();
             move || async move { Redirect::permanent(&r) }
         }))
-        // 面板路由挂载到 /{prefix}
-        .nest(&prefix, panel)
-        .layer(cors);
+        // 前端静态资源 fallback
+        .fallback(panel_static_handler)
+        .layer(cors)
+        .with_state(state);
 
     let port = std::env::var("DOCKPANEL_PORT").unwrap_or_else(|_| "3001".into());
     let addr = format!("0.0.0.0:{}", port);
@@ -149,11 +146,23 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// 面板内的静态资源处理
-/// 在 nest 内部，axum 已自动剥离前缀，这里只需处理相对路径
-async fn panel_static_handler(uri: Uri) -> impl IntoResponse {
-    let path = uri.path().trim_start_matches('/');
-    let file_path = if path.is_empty() { "index.html" } else { path };
+/// 前端静态资源处理 - 手动匹配前缀路径
+async fn panel_static_handler(
+    axum::extract::State(state): axum::extract::State<Arc<AppState>>,
+    uri: Uri,
+) -> impl IntoResponse {
+    let full_path = uri.path();
+    let prefix = format!("/{}", state.base_path);
+
+    // 不以安全前缀开头 → 404
+    if !full_path.starts_with(&prefix) {
+        return (StatusCode::NOT_FOUND, "Not Found").into_response();
+    }
+
+    // 剥离前缀
+    let relative = full_path.strip_prefix(&prefix).unwrap_or("");
+    let relative = relative.trim_start_matches('/');
+    let file_path = if relative.is_empty() { "index.html" } else { relative };
 
     if let Some(content) = Asset::get(file_path) {
         let mime = mime_guess::from_path(file_path).first_or_octet_stream();
