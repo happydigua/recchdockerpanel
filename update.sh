@@ -3,10 +3,10 @@ set -e
 
 # ============================================================
 #  RecchDockerPanel 更新脚本
-#  用法: curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/update.sh | bash
+#  用法: curl -fsSL https://download.recch.com/dockpanel/update.sh | bash
 # ============================================================
 
-REPO="happydigua/recchdockerpanel"
+DOWNLOAD_BASE="https://download.recch.com/dockpanel"
 INSTALL_DIR="/usr/local/bin"
 
 GREEN='\033[0;32m'
@@ -31,17 +31,9 @@ else
     error "未检测到 RecchDockerPanel，请先使用 install.sh 安装"
 fi
 
-# 获取最新版本
-info "正在检查最新版本..."
-LATEST=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
-if [ -z "$LATEST" ]; then
-    error "无法获取最新版本号"
-fi
-info "最新版本: ${LATEST}"
-
-# 下载新版本
-DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST}/${ASSET}"
-info "正在下载 ${LATEST} ..."
+# 下载最新版本
+DOWNLOAD_URL="${DOWNLOAD_BASE}/${ASSET}"
+info "正在下载最新版本..."
 curl -fsSL -o /tmp/dockpanel "$DOWNLOAD_URL" || error "下载失败"
 chmod +x /tmp/dockpanel
 
@@ -52,7 +44,7 @@ mv /tmp/dockpanel "${INSTALL_DIR}/dockpanel"
 systemctl start dockpanel 2>/dev/null || true
 
 sleep 2
-info "✅ RecchDockerPanel 已更新到 ${LATEST} 并重新启动！"
+info "✅ RecchDockerPanel 已更新并重新启动！"
 echo ""
 echo -e "${YELLOW}提示: 访问地址和密码不变，安全路径不变。${NC}"
 echo -e "查看状态: ${GREEN}systemctl status dockpanel${NC}"

@@ -39,27 +39,38 @@ jobs:
       - name: Build Backend
         run: cargo build --release --target x86_64-unknown-linux-musl
 
-      - name: Prepare Release Asset
+      - name: Prepare Release Assets
         run: |
-          cp target/x86_64-unknown-linux-musl/release/dockpanel ./dockpanel-linux-amd64
-          chmod +x dockpanel-linux-amd64
+          mkdir -p upload
+          cp target/x86_64-unknown-linux-musl/release/dockpanel upload/dockpanel-linux-amd64
+          cp install.sh upload/install.sh
+          cp update.sh upload/update.sh
+          chmod +x upload/dockpanel-linux-amd64
 
-      - name: Create Release
+      - name: Upload to Cloudflare R2
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET }}
+          source-dir: upload
+          destination-dir: dockpanel
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dockpanel-linux-amd64
-            install.sh
-            update.sh
+            upload/dockpanel-linux-amd64
           body: |
             ## 🚀 RecchDockerPanel ${{ github.ref_name }}
 
             ### 一键安装
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/install.sh | bash
+            curl -fsSL https://download.recch.com/dockpanel/install.sh | bash
             ```
 
-            ### 更新已安装的面板
+            ### 更新面板
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/update.sh | bash
+            curl -fsSL https://download.recch.com/dockpanel/update.sh | bash
             ```

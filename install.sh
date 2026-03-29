@@ -3,10 +3,10 @@ set -e
 
 # ============================================================
 #  RecchDockerPanel 一键安装脚本
-#  用法: curl -fsSL https://raw.githubusercontent.com/happydigua/recchdockerpanel/main/install.sh | bash
+#  用法: curl -fsSL https://download.recch.com/dockpanel/install.sh | bash
 # ============================================================
 
-REPO="happydigua/recchdockerpanel"
+DOWNLOAD_BASE="https://download.recch.com/dockpanel"
 INSTALL_DIR="/usr/local/bin"
 DATA_DIR="/opt/dockpanel"
 SERVICE_NAME="dockpanel"
@@ -45,16 +45,8 @@ else
     info "Docker 安装完成"
 fi
 
-# ---- 获取最新版本 ----
-info "正在获取最新版本..."
-LATEST=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
-if [ -z "$LATEST" ]; then
-    error "无法获取最新版本号，请检查网络连接"
-fi
-info "最新版本: ${LATEST}"
-
 # ---- 下载二进制 ----
-DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST}/${ASSET}"
+DOWNLOAD_URL="${DOWNLOAD_BASE}/${ASSET}"
 info "正在下载 ${DOWNLOAD_URL} ..."
 curl -fsSL -o /tmp/dockpanel "$DOWNLOAD_URL" || error "下载失败，请检查网络"
 chmod +x /tmp/dockpanel
@@ -64,7 +56,7 @@ info "二进制已安装到 ${INSTALL_DIR}/dockpanel"
 # ---- 创建数据目录 ----
 mkdir -p "$DATA_DIR"
 
-# ---- 生成随机密码和路径 ----
+# ---- 生成随机路径 ----
 RANDOM_PATH=$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 8)
 PORT=${DOCKPANEL_PORT:-3001}
 
@@ -94,7 +86,6 @@ systemctl daemon-reload
 systemctl enable ${SERVICE_NAME}
 systemctl start ${SERVICE_NAME}
 
-# ---- 等待服务启动 ----
 sleep 2
 
 # ---- 获取服务器 IP ----
@@ -102,19 +93,22 @@ SERVER_IP=$(curl -fsSL -4 https://ifconfig.me 2>/dev/null || hostname -I | awk '
 
 # ---- 输出结果 ----
 echo ""
-echo -e "${CYAN}╔══════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║${NC}  ${GREEN}✅ RecchDockerPanel 安装完成！${NC}                              ${CYAN}║${NC}"
-echo -e "${CYAN}╠══════════════════════════════════════════════════════╣${NC}"
-echo -e "${CYAN}║${NC}                                                      ${CYAN}║${NC}"
+echo -e "${CYAN}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║${NC}  ${GREEN}✅ RecchDockerPanel 安装完成！${NC}                          ${CYAN}║${NC}"
+echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
+echo -e "${CYAN}║${NC}                                                          ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  访问地址: ${YELLOW}http://${SERVER_IP}:${PORT}/${RANDOM_PATH}/${NC}"
 echo -e "${CYAN}║${NC}  用户名:   ${GREEN}admin${NC}"
 echo -e "${CYAN}║${NC}  密码:     ${GREEN}admin123${NC}"
-echo -e "${CYAN}║${NC}                                                      ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  ${RED}⚠️  请登录后立即修改默认密码！${NC}                      ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}                                                      ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  管理命令:                                            ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}    systemctl status dockpanel   # 查看状态            ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}    systemctl restart dockpanel  # 重启服务            ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}    journalctl -u dockpanel -f   # 查看日志            ${CYAN}║${NC}"
-echo -e "${CYAN}╚══════════════════════════════════════════════════════╝${NC}"
+echo -e "${CYAN}║${NC}                                                          ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${RED}⚠️  请登录后立即修改默认密码！${NC}                          ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}                                                          ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  管理命令:                                                ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}    systemctl status dockpanel   # 查看状态                ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}    systemctl restart dockpanel  # 重启服务                ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}    journalctl -u dockpanel -f   # 查看日志                ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}                                                          ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  更新面板:                                                ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}    curl -fsSL ${DOWNLOAD_BASE}/update.sh | bash            ${CYAN}║${NC}"
+echo -e "${CYAN}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
